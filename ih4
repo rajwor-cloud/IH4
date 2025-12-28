@@ -1,0 +1,455 @@
+jsx
+// src/App.js - Main IntHealth MediCompare App
+import React, { useState } from 'react';
+import './App.css';
+import hospitalsData from './data/hospitals.json';
+import SearchPanel from './components/SearchPanel';
+import ResultsPanel from './components/ResultsPanel';
+import Header from './components/Header';
+import Footer from './components/Footer';
+
+function App() {
+  const [filteredHospitals, setFilteredHospitals] = useState(hospitalsData);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    priceRange: [0, 20000],
+    accreditations: [],
+    cities: [],
+    insurance: false
+  });
+
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+    // Apply filters logic here
+    const filtered = hospitalsData.filter(hospital => {
+      const matchesSearch = hospital.treatment.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           hospital.hospital.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesPrice = hospital.total >= newFilters.priceRange[0] && hospital.total <= newFilters.priceRange[1];
+      return matchesSearch && matchesPrice;
+    });
+    setFilteredHospitals(filtered);
+  };
+
+  return (
+    <div className="App">
+      <Header />
+      <main className="main-content">
+        <div className="container">
+          <div className="hero-section">
+            <h1>IntHealth MediCompare</h1>
+            <p>Compare medical treatment costs across India's top hospitals. Save 60-70% vs international prices.</p>
+          </div>
+          
+          <div className="app-grid">
+            <SearchPanel 
+              onFilterChange={handleFilterChange}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              filters={filters}
+            />
+            <ResultsPanel hospitals={filteredHospitals} />
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+export default App;
+jsx
+// src/components/Header.js
+import React from 'react';
+
+const Header = () => (
+  <header className="header">
+    <div className="container">
+      <div className="header-content">
+        <div className="logo">
+          <h2>🩺 IntHealth</h2>
+        </div>
+        <nav>
+          <a href="#home">Home</a>
+          <a href="#compare">Compare</a>
+          <a href="#hospitals">Hospitals</a>
+          <a href="#contact">Contact</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+);
+
+export default Header;
+jsx
+// src/components/SearchPanel.js
+import React from 'react';
+
+const SearchPanel = ({ onFilterChange, searchTerm, setSearchTerm, filters }) => {
+  return (
+    <aside className="search-panel">
+      <div className="search-input">
+        <input 
+          type="text" 
+          placeholder="Search treatments or hospitals..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+      
+      <div className="filter-section">
+        <h3>Filters</h3>
+        
+        <div className="filter-group">
+          <label>Price Range (₹)</label>
+          <input type="range" min="0" max="20000" />
+          <div className="range-display">₹{filters.priceRange[0]} - ₹{filters.priceRange[1]}</div>
+        </div>
+
+        <div className="filter-group">
+          <label>Cities</label>
+          <label><input type="checkbox" /> Chennai</label>
+          <label><input type="checkbox" /> Delhi</label>
+          <label><input type="checkbox" /> Bangalore</label>
+          <label><input type="checkbox" /> Gurugram</label>
+        </div>
+
+        <div className="filter-group">
+          <label>Accreditations</label>
+          <label><input type="checkbox" /> JCI</label>
+          <label><input type="checkbox" /> NABH</label>
+          <label><input type="checkbox" /> ISO</label>
+        </div>
+
+        <button className="apply-filters">Apply Filters</button>
+      </div>
+
+      <div className="partners">
+        <h4>Partners</h4>
+        <div className="partner-logos">
+          <span>Apollo</span>
+          <span>Fortis</span>
+          <span>Max</span>
+          <span>Cigna</span>
+        </div>
+      </div>
+    </aside>
+  );
+};
+
+export default SearchPanel;
+jsx
+// src/components/ResultsPanel.js
+import React from 'react';
+import HospitalCard from './HospitalCard';
+
+const ResultsPanel = ({ hospitals }) => (
+  <section className="results-panel">
+    <div className="results-header">
+      <h2>{hospitals.length} Hospitals Found</h2>
+      <div className="sort-options">
+        <button>Sort by Price ↑</button>
+        <button>Sort by Rating ↓</button>
+      </div>
+    </div>
+    
+    <div className="hospitals-grid">
+      {hospitals.map((hospital, index) => (
+        <HospitalCard key={index} hospital={hospital} />
+      ))}
+    </div>
+  </section>
+);
+
+export default ResultsPanel;
+jsx
+// src/components/HospitalCard.js
+import React from 'react';
+
+const HospitalCard = ({ hospital }) => (
+  <div className="hospital-card">
+    <div className="hospital-header">
+      <div className="hospital-info">
+        <h3>{hospital.hospital}</h3>
+        <div className="location">{hospital.city}</div>
+        <div className="rating">⭐ {hospital.rating}/5 ({hospital.reviews} reviews)</div>
+      </div>
+      <div className="price-tag">
+        <div className="total-price">₹{hospital.total.toLocaleString()}</div>
+        <div className="savings">Save 65% vs USA</div>
+      </div>
+    </div>
+
+    <div className="cost-breakdown">
+      <div className="cost-item">
+        <span>Surgery:</span>
+        <span>₹{hospital.surgery.toLocaleString()}</span>
+      </div>
+      <div className="cost-item">
+        <span>Medication:</span>
+        <span>₹{hospital.medication.toLocaleString()}</span>
+      </div>
+      <div className="cost-item">
+        <span>Hospital Stay ({hospital.days} days):</span>
+        <span>₹{hospital.hospitalStay.toLocaleString()}</span>
+      </div>
+      <div className="cost-item">
+        <span>Travel + Visa:</span>
+        <span>₹{hospital.travel.toLocaleString()}</span>
+      </div>
+      <div className="cost-item">
+        <span>Accommodation + Food:</span>
+        <span>₹{hospital.accommodation.toLocaleString()}</span>
+      </div>
+    </div>
+
+    <div className="hospital-features">
+      <span className={`accreditation ${hospital.accreditations.jci ? 'active' : ''}`}>JCI</span>
+      <span className={`accreditation ${hospital.accreditations.nabh ? 'active' : ''}`}>NABH</span>
+      <span>{hospital.waitTime} wait time</span>
+    </div>
+
+    <button className="cta-button">Get Quote</button>
+  </div>
+);
+
+export default HospitalCard;
+jsx
+// src/components/Footer.js
+import React from 'react';
+
+const Footer = () => (
+  <footer className="footer">
+    <div className="container">
+      <div className="footer-content">
+        <div className="footer-brand">
+          <h3>🩺 IntHealth</h3>
+          <p>Transparent medical cost comparison across India</p>
+        </div>
+        <div className="footer-links">
+          <a href="mailto:support@inthealth.com">support@inthealth.com</a>
+          <div>© 2025 IntHealth. All rights reserved.</div>
+        </div>
+      </div>
+    </div>
+  </footer>
+);
+
+export default Footer;
+json
+// src/data/hospitals.json
+[
+  {
+    "id": 1,
+    "hospital": "Apollo Hospitals, Chennai",
+    "city": "Chennai",
+    "treatment": "Knee Replacement",
+    "rating": 4.8,
+    "reviews": 1278,
+    "total": 11680,
+    "surgery": 6500,
+    "medication": 1200,
+    "hospitalStay": 2800,
+    "days": 5,
+    "travel": 800,
+    "accommodation": 380,
+    "accreditations": { "jci": true, "nabh": true },
+    "waitTime": "2-3 days",
+    "insurance": ["Cigna", "Allianz"]
+  },
+  {
+    "id": 2,
+    "hospital": "Fortis Memorial, Gurugram",
+    "city": "Gurugram",
+    "treatment": "Knee Replacement",
+    "rating": 4.7,
+    "reviews": 956,
+    "total": 13250,
+    "surgery": 7200,
+    "medication": 1400,
+    "hospitalStay": 3200,
+    "days": 5,
+    "travel": 950,
+    "accommodation": 500,
+    "accreditations": { "jci": true, "nabh": true },
+    "waitTime": "1-2 days",
+    "insurance": ["Bupa", "Cigna"]
+  },
+  {
+    "id": 3,
+    "hospital": "Manipal Hospital, Bangalore",
+    "city": "Bangalore",
+    "treatment": "Knee Replacement",
+    "rating": 4.6,
+    "reviews": 823,
+    "total": 12450,
+    "surgery": 6800,
+    "medication": 1100,
+    "hospitalStay": 3000,
+    "days": 5,
+    "travel": 850,
+    "accommodation": 700,
+    "accreditations": { "jci": false, "nabh": true },
+    "waitTime": "3-4 days",
+    "insurance": ["Allianz"]
+  }
+]
+css
+/* src/App.css - Complete Styling */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+  color: #333;
+}
+
+.container { max-width: 1400px; margin: 0 auto; padding: 0 20px; }
+
+.header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem 0;
+  position: sticky; top: 0; z-index: 100;
+}
+
+.header-content { display: flex; justify-content: space-between; align-items: center; }
+.logo h2 { font-size: 1.8rem; }
+nav a { color: white; margin-left: 2rem; text-decoration: none; opacity: 0.9; }
+nav a:hover { opacity: 1; }
+
+.main-content { min-height: 100vh; background: #f8f9ff; padding: 2rem 0; }
+
+.hero-section {
+  text-align: center; padding: 3rem 0; background: white; border-radius: 20px; margin-bottom: 3rem;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+}
+.hero-section h1 { font-size: 3rem; margin-bottom: 1rem; color: #2d3748; }
+.hero-section p { font-size: 1.3rem; color: #666; max-width: 600px; margin: 0 auto; }
+
+.app-grid {
+  display: grid; grid-template-columns: 320px 1fr; gap: 2rem;
+}
+
+.search-panel {
+  background: white; border-radius: 20px; padding: 2rem; height: fit-content;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1); position: sticky; top: 100px;
+}
+
+.search-input input {
+  width: 100%; padding: 1rem; border: 2px solid #e2e8f0; border-radius: 12px;
+  font-size: 1rem; transition: border-color 0.3s;
+}
+.search-input input:focus { outline: none; border-color: #667eea; }
+
+.filter-section h3 { margin-bottom: 1.5rem; color: #2d3748; }
+.filter-group { margin-bottom: 1.5rem; }
+.filter-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+.filter-group input[type="checkbox"] { margin-right: 0.5rem; }
+.apply-filters {
+  width: 100%; padding: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white; border: none; border-radius: 12px; font-size: 1rem; cursor: pointer;
+}
+
+.partners { margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e2e8f0; }
+.partner-logos { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.9rem; opacity: 0.7; }
+
+.results-panel { background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+
+.results-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;
+  flex-wrap: wrap; gap: 1rem;
+}
+.sort-options button {
+  padding: 0.5rem 1rem; margin-left: 0.5rem; background: #f7fafc; border: 1px solid #e2e8f0;
+  border-radius: 8px; cursor: pointer; transition: all 0.3s;
+}
+.sort-options button:hover { background: #667eea; color: white; }
+
+.hospitals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 2rem; }
+
+.hospital-card {
+  border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.5rem; transition: all 0.3s;
+  background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.hospital-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
+
+.hospital-header { display: flex; justify-content: space-between; margin-bottom: 1.5rem; }
+.hospital-info h3 { color: #2d3748; margin-bottom: 0.25rem; }
+.location { color: #666; font-size: 0.95rem; }
+.rating { color: #48bb78; font-weight: 500; }
+
+.price-tag text-align: right;
+.total-price { font-size: 1.8rem; font-weight: bold; color: #2f855a; }
+.savings { color: #666; font-size: 0.85rem; }
+
+.cost-breakdown {
+  display: grid; grid-template-columns: 1fr auto; gap: 1rem 2rem; margin-bottom: 1.5rem;
+  padding: 1rem; background: #f7fafc; border-radius: 12px;
+}
+.cost-item { font-size: 0.9rem; }
+.cost-item span:first-child { color: #666; }
+
+.hospital-features {
+  display: flex; gap: 1rem; margin-bottom: 1.5rem; font-size: 0.85rem; flex-wrap: wrap;
+}
+.accreditation {
+  padding: 0.25rem 0.75rem; border-radius: 20px; background: #e2e8f0; color: #666;
+}
+.accreditation.active { background: #48bb78; color: white; }
+
+.cta-button {
+  width: 100%; padding: 1rem; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 500;
+  cursor: pointer; transition: transform 0.3s;
+}
+.cta-button:hover { transform: scale(1.02); }
+
+.footer {
+  background: #2d3748; color: white; padding: 3rem 0 1rem;
+}
+.footer-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+.footer-brand h3 { color: #667eea; }
+.footer-links a { color: #a0aec0; text-decoration: none; }
+
+@media (max-width: 768px) {
+  .app-grid { grid-template-columns: 1fr; }
+  .search-panel { order: 2; position: static; }
+  .hero-section h1 { font-size: 2rem; }
+  .hospitals-grid { grid-template-columns: 1fr; }
+}
+json
+// package.json
+{
+  "name": "inthealth-medicompare",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
